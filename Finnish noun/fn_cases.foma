@@ -1,0 +1,89 @@
+# ?
+define Consonant b | c | d | f | g | h | j | k | l | m | n | p | q | r | s | t | v | w | x | z ;
+define FrontVowel ä | ö | y ;
+define NeutralVowel e | i ;
+define BackVowel a | o | u ;
+define Vowel FrontVowel | NeutralVowel | BackVowel | A | E;
+define Letter Vowel | Consonant;
+
+# ?
+define Case "+Nom" | "+Gen" | "+Part" | "+In" | "+All" | "+El" | "+Ad" | "+Abl" | "+Ill" ;
+define Number "+Sg" | "+Pl" ; 
+
+# ?
+define FrontStem [Consonant* [ FrontVowel | NeutralVowel ] ]+ Consonant*;
+define BackStem [Consonant* [ BackVowel | NeutralVowel ] ]* [Consonant* BackVowel] [Consonant* [ BackVowel | NeutralVowel ] ]* Consonant*;
+define Stem Letter+;
+
+define Input Stem Number Case;
+
+# ?
+define NomPl "+Pl" "+Nom" -> "^" t || _ ;
+define NomSg "+Sg" "+Nom" -> "^" || _ ;
+define Nominatives NomPl .o. NomSg ;
+
+# ?
+define GenDen "+Gen" -> d e n || Vowel Vowel "+Pl" _ ;
+define Gen "+Gen" -> E n || _ ;
+define Genetive GenDen .o. Gen ;
+
+# ?
+define PartTa "+Part" -> t A || [ Consonant Vowel Vowel | Consonant ] Number _ ;
+define PartA "+Part" -> A || _ ;
+
+# Локативы. Различие между -in и -hin во множественном числе не работает в полной мере, потому что для него надо обрабатывать основы. Например, делать для lehti основу leht. В файле .in для проверки есть и полное слово, и голая основа.
+define LocativeCases "+In" -> s s A , "+El" -> s t A , "+Ad" -> l l A , "+Abl" -> l t A , "+All" -> l l A || _ ;
+define IllativeSgO "+Sg" "+Ill" -> o n || o _ ;
+define IllativeSgU "+Sg" "+Ill" -> u n || u _ ;
+define IllativeSgA "+Sg" "+Ill" -> a n || a _ ;
+define IllativeSgE "+Sg" "+Ill" -> e n || e _ ;
+define IllativeSgI "+Sg" "+Ill" -> i n || i _ ;
+define IllativeSgAA "+Sg" "+Ill" -> ä n || ä _ ;
+define IllativeSgOO "+Sg" "+Ill" -> ö n || ö _ ;
+define IllativeSgY "+Sg" "+Ill" -> y n || y _ ;
+define IllativePlHin "+Ill" -> h i n || Vowel "+Pl" _ ;
+define IllativePlIn "+Ill" -> i n || Consonant "+Pl" _ ;
+
+define IllativeSg IllativeSgA .o. IllativeSgAA .o. IllativeSgE .o. IllativeSgI .o. IllativeSgO .o. IllativeSgOO .o. IllativeSgU .o. IllativeSgY ;
+define Illative IllativeSg .o. IllativePlHin .o. IllativePlIn ;
+
+define OtherCases PartTa .o. PartA .o. LocativeCases .o. Illative ;
+
+# ?
+define Sg "+Sg" -> "^" || _ ;
+define OmitA ä -> 0, i -> 0 || _ "+Pl";
+define Ai2Oi a -> o || [ a | e | i ] Vowel* Consonant+ _ "+Pl";
+define Ai2i a -> 0 || [ o | u ] Vowel* Consonant+ _ "+Pl";
+define OmitFirst Vowel -> 0 || _ Vowel "+Pl" Consonant;
+define Pl "+Pl" -> "^" i || _ ;
+
+define NumberInfl Sg .o. OmitA .o. Ai2i .o. Ai2Oi .o. OmitFirst .o. Pl ;
+
+# ?
+define JotPl i -> j || Vowel "^"* _ "^"* Vowel ;
+define HarmonyBack A -> a || BackStem "^" Letter* _;
+define HarmonyFront A -> ä || FrontStem "^" Letter* _;
+
+define Phonetics JotPl .o. HarmonyBack .o. HarmonyFront ;
+
+# ?
+define DoublePTK p p -> p , t t -> t , k k -> k || Letter _ "^"* Vowel "^"* Consonant [ .#. | Consonant ] ;
+define SingleP p -> v || Vowel _ "^"* Vowel "^"* Consonant [ .#. | Consonant ] ;
+define SingleTK t -> d , k -> 0 || Letter _ "^"* Vowel "^"* Consonant [ .#. | Consonant ] ; 
+define TwoLetter m p -> m m , n t -> n n , n k -> n g , l t -> l l , r t -> r r || Letter _ "^"* Vowel "^"* Consonant [ .#. | Consonant ] ;
+define ThreeLetter l k e -> l j e , r k e -> r j e , h k e -> h j e , u k u -> u v u || Letter _ "^"* Consonant [ .#. | Consonant ] ;
+define N2M i n -> i m , t ö n -> t t ö m || _ "^" Vowel;
+define EOmit E -> 0 || Vowel "^" _;
+define EReal E -> e || _;
+
+define Alternations N2M  .o. EOmit .o. EReal .o. ThreeLetter .o. TwoLetter .o. SingleP .o. SingleTK .o. DoublePTK ;
+
+# ?
+define Affixes Nominatives .o. Genetive .o. OtherCases .o. NumberInfl .o. Alternations .o. Phonetics;
+
+# ?
+define Cleanup "^" -> 0 || _ ;
+
+# ?
+define Grammar Input .o. Affixes .o. Cleanup ;
+push Grammar
